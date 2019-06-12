@@ -8,10 +8,18 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 /**
  *
  */
 public class Main {
+
+    /**
+     * Логгер
+     */
+    private static Logger logger = LogManager.getLogger(Main.class);
 
     /**
      * Основной метод

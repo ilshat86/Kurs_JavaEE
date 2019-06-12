@@ -8,9 +8,11 @@ import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.DatabaseException;
 import liquibase.exception.LiquibaseException;
 import liquibase.resource.FileSystemResourceAccessor;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.sql.*;
 import java.util.Properties;
 
@@ -19,7 +21,7 @@ import java.util.Properties;
  */
 public class dbWorker {
 
-
+    private static Logger logger = LogManager.getLogger(dbWorker.class);
     /**
      * Создание коннекта к БД
      * @return
@@ -31,7 +33,7 @@ public class dbWorker {
     public static Connection getConnection() throws DatabaseException, SQLException, IOException, ClassNotFoundException {
         try {
             Properties props = new Properties();
-            FileInputStream in = new FileInputStream("src/part02/lesson13/source/connection.properties");
+            InputStream in = Main.class.getResourceAsStream("/connection.properties");//new FileInputStream("src/part02/lesson13/source/");
             props.load(in);
             in.close();
 
@@ -40,15 +42,18 @@ public class dbWorker {
             if (driver != null) {
                 Class.forName(driver);
             }
-
+            logger.info("Properties считался");
             String url = props.getProperty("url");
+            logger.info("Устанавливаем соединение с БД");
             Connection connection = DriverManager.getConnection(url, props);
+            logger.info("Соединение с БД установлено");
             return connection;
         } catch (IOException ex) {
-            System.out.println("ошибка доступа к файлу.");
+            logger.error("ошибка доступа к файлу.", ex);
+            System.out.println();
             return null;
         } catch (ClassNotFoundException e) {
-            System.out.println("JDBC driver is missing");
+            logger.error("JDBC driver is missing",e);
             return null;
         }
     }
@@ -66,13 +71,15 @@ public class dbWorker {
                 Liquibase liquibase;
                 liquibase = null;
                 Database database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(connection));
-                liquibase = new Liquibase("./src/part02/lesson13/source/changelog.xml", new FileSystemResourceAccessor(), database);
+                String changeFileName = "C:\\Users\\ilsha\\IdeaProjects\\Kurs_JavaEE\\resources\\changelog.xml";
+                liquibase = new Liquibase(changeFileName, new FileSystemResourceAccessor(), database);
                 liquibase.update(new Contexts());
             }
         } catch (DatabaseException e) {
-            e.printStackTrace();
+            logger.error(e);
         } catch (LiquibaseException e) {
-            e.printStackTrace();
+            logger.error(e);
+            ;
         } finally {
             if (connection != null) {
                 try {
@@ -80,6 +87,7 @@ public class dbWorker {
                     connection.close();
                 } catch (SQLException e) {
                     //nothing to do
+                    logger.error(e);
                 }
             }
         }
@@ -105,9 +113,10 @@ public class dbWorker {
                 "\tid, name, birthday, \"login_ID\", city, email, description)\n" +
                 "\tVALUES (2, 'Петров Петр Петрович', '12.12.1956', 'Petr_p', 'Ufa', 'p.petrov@mydomain.com', 'что то дополнительно2');");
         statement.executeBatch();
+        logger.info("Выполнена команда BATCH");
         statement.close();
     } catch (SQLException e) {
-        e.printStackTrace();
+            logger.error(e);
 
     } }
 
@@ -132,9 +141,10 @@ public class dbWorker {
         statement.execute("INSERT INTO public.role(\n" +
                 "\tid, name, description)\n" +
                 "\tVALUES (3, 'Оператор', 'данные клиентов');");
+        logger.info("Выполнена команда Execute");
         statement.close();
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error(e);
 
         }
     }
@@ -154,10 +164,11 @@ public class dbWorker {
             preparedStatement.setString(2, name);
 
             ResultSet result = preparedStatement.executeQuery();
+            logger.info("выполнен параметризированный запрос");
             result.close();
             preparedStatement.close();
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error(e);
 
         }
     }
@@ -177,6 +188,7 @@ public class dbWorker {
 
         try {
             connection.setAutoCommit(false);
+            logger.info("перешли на ручное управление транзакциями");
             connection.setTransactionIsolation(connection.TRANSACTION_SERIALIZABLE);
             Statement statement = connection.createStatement();
             statement.execute("INSERT INTO public.role(\n" +
@@ -184,26 +196,32 @@ public class dbWorker {
                     "\tVALUES (4, 'Просто', 'Полные права');");
 
             savepoint_0 = connection.setSavepoint("SAVEPOINT_0");
+            logger.info("Установлено точка сохранения 0");
             getInsertBatch(connection,false);
             savepoint_1 = connection.setSavepoint("SAVEPOINT_1");
-
+            logger.info("Установлено точка сохранения 1");
+            //connection.commit();
         } catch (SQLException e) {
+            logger.error(e);
             try {
                 connection.rollback();
             } catch (SQLException e1) {
-                e1.printStackTrace();
+                logger.error(e1);
             }
         }
 
         try {
             getInsert(connection,false);
             savepoint_2 = connection.setSavepoint("SAVEPOINT_2");
-//          connection.commit();
+            logger.info("Установлено точка сохранения 2");
+
+            //connection.commit();
         } catch (SQLException e) {
+            logger.error(e);
             try {
                 connection.rollback(savepoint_1);
             } catch (SQLException e1) {
-                e1.printStackTrace();
+                logger.error(e1);
             }
         }
         try {
@@ -216,19 +234,23 @@ public class dbWorker {
                     "\tVALUES (2, 2, 2);");
             statement.addBatch("INSERT INTO public.\"user_role\"(\n" +
                     "\tid, \"User_id\", \"Role_id\")\n" +
-                    "\tVALUES (3, 3, '3');");
+                    "\tVALUES (3, 3, 3);");
             statement.executeBatch();
             savepoint_3 = connection.setSavepoint("SAVEPOINT_3");
+            logger.info("Установлено точка сохранения 3");
             statement.close();
             connection.rollback(savepoint_0); // просто взял и передумал записывать в базу
+            logger.info("Вернулись к точке сохранения 0");
+
         } catch (SQLException e) {
             try {
+                logger.error(e);
                 connection.rollback(savepoint_0);
+                logger.info("Вернулись к точке сохранения 0");
             } catch (SQLException e1) {
-                e1.printStackTrace();
+                logger.error(e1);
             }
         }
         connection.commit();
-
     }
 }

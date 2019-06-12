@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd
+        http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+
+    <changeSet id="CreateLogs" author="i.sibagatullin">
+        <createTable tableName="LOGS">
+            <column name="id" type="serial">
+                <constraints nullable="false"/>
+            </column>
+            <column name="DATE" type="DateTime">
+                <constraints nullable="false"/>
+            </column>
+            <column name="LOG_LEVEL" type="varchar(255)"/>
+            <column name="MESSAGE" type="varchar(255)"/>
+            <column name="EXCEPTION" type="varchar(255)"/>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

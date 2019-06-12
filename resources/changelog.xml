@@ -13,4 +13,5 @@
     <!-- Should be only links to per-version cumulative changelog files. -->
     <include file="dbMigrations/Create_table.xml" relativeToChangelogFile="true"/>
     <include file="dbMigrations/Create_table2.xml" relativeToChangelogFile="true"/>
+    <include file="dbMigrations/Create_tableLogs.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
